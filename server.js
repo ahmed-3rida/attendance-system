@@ -2613,6 +2613,273 @@ app.post('/api/admin/super-admin/create', requireRole(['super_admin']), (req, re
     });
 });
 
+// ==================== Students Management APIs ====================
+
+// Get students list (for admin panel)
+app.get('/api/admin/students', (req, res) => {
+    if (!req.session.adminId) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    
+    const search = req.query.search || '';
+    const limit = parseInt(req.query.limit) || 100;
+    
+    let query = 'SELECT * FROM students WHERE 1=1';
+    const params = [];
+    
+    if (search) {
+        query += ' AND (student_id LIKE ? OR student_name LIKE ? OR group_number LIKE ? OR section_number LIKE ?)';
+        const searchPattern = `%${search}%`;
+        params.push(searchPattern, searchPattern, searchPattern, searchPattern);
+    }
+    
+    query += ' ORDER BY student_id ASC LIMIT ?';
+    params.push(limit);
+    
+    db.all(query, params, (err, students) => {
+        if (err) {
+            console.error('Error fetching students:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        
+        res.json({ success: true, students: students || [] });
+    });
+});
+
+// Update student (for admin)
+app.put('/api/admin/students/:studentId', (req, res) => {
+    if (!req.session.adminId) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    
+    const { studentId } = req.params;
+    const { student_name, group_number, section_number } = req.body;
+    
+    if (!student_name || !student_name.trim()) {
+        return res.status(400).json({ success: false, message: 'اسم الطالب مطلوب' });
+    }
+    
+    db.run(
+        'UPDATE students SET student_name = ?, group_number = ?, section_number = ? WHERE student_id = ?',
+        [student_name.trim(), group_number || null, section_number || null, studentId],
+        function(err) {
+            if (err) {
+                console.error('Error updating student:', err);
+                return res.status(500).json({ success: false, message: 'Database error' });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ success: false, message: 'الطالب غير موجود' });
+            }
+            
+            res.json({ success: true, message: 'تم تحديث بيانات الطالب بنجاح' });
+        }
+    );
+});
+
+// Delete student (for admin)
+app.delete('/api/admin/students/:studentId', (req, res) => {
+    if (!req.session.adminId) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    
+    const { studentId } = req.params;
+    
+    db.run('DELETE FROM students WHERE student_id = ?', [studentId], function(err) {
+        if (err) {
+            console.error('Error deleting student:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        
+        if (this.changes === 0) {
+            return res.status(404).json({ success: false, message: 'الطالب غير موجود' });
+        }
+        
+        res.json({ success: true, message: 'تم حذف الطالب بنجاح' });
+    });
+});
+
+// ==================== Settings Management APIs ====================
+
+// Get all settings (for admin panel)
+app.get('/api/admin/settings', (req, res) => {
+    if (!req.session.adminId) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    
+    db.all('SELECT * FROM settings ORDER BY setting_key', (err, settings) => {
+        if (err) {
+            console.error('Error fetching settings:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        
+        res.json({ success: true, settings: settings || [] });
+    });
+});
+
+// Update setting (for admin)
+app.put('/api/admin/settings', (req, res) => {
+    if (!req.session.adminId) {
+        return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+    
+    const { setting_key, setting_value } = req.body;
+    
+    if (!setting_key) {
+        return res.status(400).json({ success: false, message: 'معرف الإعداد مطلوب' });
+    }
+    
+    // Validate setting_value (should be '0' or '1')
+    const value = setting_value === true || setting_value === '1' || setting_value === 1 ? '1' : '0';
+    
+    db.run(
+        'UPDATE settings SET setting_value = ? WHERE setting_key = ?',
+        [value, setting_key],
+        function(err) {
+            if (err) {
+                console.error('Error updating setting:', err);
+                return res.status(500).json({ success: false, message: 'Database error' });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ success: false, message: 'الإعداد غير موجود' });
+            }
+            
+            res.json({ success: true, message: 'تم تحديث الإعداد بنجاح' });
+        }
+    );
+});
+
+// ==================== Student APIs (for user page) ====================
+
+// Get student data
+app.get('/api/student/:studentId', (req, res) => {
+    const { studentId } = req.params;
+    
+    db.get('SELECT * FROM students WHERE student_id = ?', [studentId], (err, student) => {
+        if (err) {
+            console.error('Error fetching student:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        
+        if (!student) {
+            return res.json({ success: false, message: 'الطالب غير موجود', student: null });
+        }
+        
+        res.json({ success: true, student });
+    });
+});
+
+// Save or update student data
+app.post('/api/student/save', (req, res) => {
+    const { student_id, student_name, group_number, section_number } = req.body;
+    
+    if (!student_id || !student_name || !student_name.trim()) {
+        return res.status(400).json({ success: false, message: 'الرقم الجامعي والاسم مطلوبان' });
+    }
+    
+    // Load settings to check if entry is enabled
+    db.get("SELECT setting_value FROM settings WHERE setting_key = 'student_data_entry_enabled'", (err, setting) => {
+        if (err) {
+            console.error('Error checking settings:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        
+        const entryEnabled = setting && setting.setting_value === '1';
+        
+        // Check if student exists
+        db.get('SELECT * FROM students WHERE student_id = ?', [student_id], (err, existing) => {
+            if (err) {
+                console.error('Error checking student:', err);
+                return res.status(500).json({ success: false, message: 'Database error' });
+            }
+            
+            if (existing) {
+                // Student exists - check if edit is enabled
+                db.get("SELECT setting_value FROM settings WHERE setting_key = 'student_data_edit_enabled'", (err, editSetting) => {
+                    if (err) {
+                        console.error('Error checking edit settings:', err);
+                        return res.status(500).json({ success: false, message: 'Database error' });
+                    }
+                    
+                    const editEnabled = editSetting && editSetting.setting_value === '1';
+                    
+                    if (!editEnabled) {
+                        return res.status(403).json({ success: false, message: 'تعديل البيانات غير مسموح حالياً' });
+                    }
+                    
+                    // Update existing student
+                    db.run(
+                        'UPDATE students SET student_name = ?, group_number = ?, section_number = ? WHERE student_id = ?',
+                        [student_name.trim(), group_number || null, section_number || null, student_id],
+                        function(err) {
+                            if (err) {
+                                console.error('Error updating student:', err);
+                                return res.status(500).json({ success: false, message: 'Database error' });
+                            }
+                            
+                            // Get updated student
+                            db.get('SELECT * FROM students WHERE student_id = ?', [student_id], (err, updated) => {
+                                if (err) {
+                                    return res.status(500).json({ success: false, message: 'Database error' });
+                                }
+                                res.json({ success: true, message: 'تم تحديث البيانات بنجاح', student: updated });
+                            });
+                        }
+                    );
+                });
+            } else {
+                // New student - check if entry is enabled
+                if (!entryEnabled) {
+                    return res.status(403).json({ success: false, message: 'إدخال بيانات جديدة غير مسموح حالياً' });
+                }
+                
+                // Insert new student
+                db.run(
+                    'INSERT INTO students (student_id, student_name, group_number, section_number) VALUES (?, ?, ?, ?)',
+                    [student_id, student_name.trim(), group_number || null, section_number || null],
+                    function(err) {
+                        if (err) {
+                            console.error('Error saving student:', err);
+                            // Check if it's a duplicate key error
+                            if (err.message && err.message.includes('UNIQUE')) {
+                                return res.status(400).json({ success: false, message: 'الطالب مسجل بالفعل' });
+                            }
+                            return res.status(500).json({ success: false, message: 'Database error' });
+                        }
+                        
+                        // Get saved student
+                        db.get('SELECT * FROM students WHERE student_id = ?', [student_id], (err, saved) => {
+                            if (err) {
+                                return res.status(500).json({ success: false, message: 'Database error' });
+                            }
+                            res.json({ success: true, message: 'تم حفظ البيانات بنجاح', student: saved });
+                        });
+                    }
+                );
+            }
+        });
+    });
+});
+
+// Get settings (for user page)
+app.get('/api/settings', (req, res) => {
+    db.all('SELECT setting_key, setting_value FROM settings', (err, settings) => {
+        if (err) {
+            console.error('Error fetching settings:', err);
+            return res.status(500).json({ success: false, message: 'Database error' });
+        }
+        
+        // Convert to object format for easier access
+        const settingsObj = {};
+        (settings || []).forEach(setting => {
+            settingsObj[setting.setting_key] = setting.setting_value === '1';
+        });
+        
+        res.json({ success: true, ...settingsObj });
+    });
+});
+
 // Get doctor profile information
 app.get('/api/admin/profile', (req, res) => {
     if (!req.session.adminId) {
