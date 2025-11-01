@@ -168,6 +168,25 @@ db.serialize(() => {
         UNIQUE(doctor_id, subject_id)
     )`);
     
+    // Students table (to store student profile data)
+    db.run(`CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        student_id TEXT UNIQUE NOT NULL,
+        student_name TEXT NOT NULL,
+        group_number TEXT,
+        section_number TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+    
+    // Settings table (to store system settings)
+    db.run(`CREATE TABLE IF NOT EXISTS settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        setting_key TEXT UNIQUE NOT NULL,
+        setting_value TEXT NOT NULL DEFAULT '0',
+        description TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+    
     // Migration: Move existing assigned_subject_id to doctor_subjects table
     db.all('SELECT id, assigned_subject_id, username FROM admins WHERE role = "doctor" AND assigned_subject_id IS NOT NULL', (err, doctors) => {
         if (!err && doctors) {
@@ -323,6 +342,62 @@ db.get("SELECT * FROM admins WHERE username = 'admin'", (err, row) => {
         } else {
             console.log('✅ Admin user already has correct role');
         }
+    }
+});
+
+// Add default settings if they don't exist
+db.get("SELECT COUNT(*) as count FROM settings", (err, result) => {
+    if (!err && result.count === 0) {
+        const defaultSettings = [
+            { 
+                setting_key: 'student_data_entry_enabled', 
+                setting_value: '1', 
+                description: 'تفعيل إدخال بيانات الطلاب (يسمح للطلاب بإنشاء حساب وإدخال بياناتهم)' 
+            },
+            { 
+                setting_key: 'student_data_edit_enabled', 
+                setting_value: '1', 
+                description: 'تفعيل تعديل بيانات الطلاب (يسمح للطلاب بتعديل بياناتهم المحفوظة)' 
+            }
+        ];
+        
+        defaultSettings.forEach(setting => {
+            db.run("INSERT INTO settings (setting_key, setting_value, description) VALUES (?, ?, ?)",
+                   [setting.setting_key, setting.setting_value, setting.description], (err) => {
+                if (err) {
+                    console.error('Error creating default setting:', err);
+                } else {
+                    console.log(`✅ Created default setting: ${setting.setting_key}`);
+                }
+            });
+        });
+    } else if (!err && result.count > 0) {
+        // Ensure all required settings exist
+        db.get("SELECT * FROM settings WHERE setting_key = 'student_data_entry_enabled'", (err, row) => {
+            if (!err && !row) {
+                db.run("INSERT INTO settings (setting_key, setting_value, description) VALUES (?, ?, ?)",
+                       ['student_data_entry_enabled', '1', 'تفعيل إدخال بيانات الطلاب'], (err) => {
+                    if (err) {
+                        console.error('Error creating student_data_entry_enabled setting:', err);
+                    } else {
+                        console.log('✅ Created student_data_entry_enabled setting');
+                    }
+                });
+            }
+        });
+        
+        db.get("SELECT * FROM settings WHERE setting_key = 'student_data_edit_enabled'", (err, row) => {
+            if (!err && !row) {
+                db.run("INSERT INTO settings (setting_key, setting_value, description) VALUES (?, ?, ?)",
+                       ['student_data_edit_enabled', '1', 'تفعيل تعديل بيانات الطلاب'], (err) => {
+                    if (err) {
+                        console.error('Error creating student_data_edit_enabled setting:', err);
+                    } else {
+                        console.log('✅ Created student_data_edit_enabled setting');
+                    }
+                });
+            }
+        });
     }
 });
 
