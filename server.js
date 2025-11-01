@@ -3016,15 +3016,18 @@ app.delete('/api/admin/students/:studentId', requireRole(['super_admin', 'doctor
 
 // ==================== Admin Settings Management ====================
 
-// Get all settings (admin)
-app.get('/api/admin/settings', requireRole(['super_admin']), (req, res) => {
+// Get all settings (admin) - Allow both super_admin and doctor to view settings
+app.get('/api/admin/settings', requireRole(['super_admin', 'doctor']), (req, res) => {
     db.all("SELECT * FROM settings ORDER BY setting_key", [], (err, settings) => {
         if (err) {
             console.error('Error fetching settings:', err);
             return res.status(500).json({ success: false, message: 'Database error' });
         }
         
-        res.json({ success: true, settings });
+        // Include whether user can edit settings (only super_admin can edit)
+        const canEdit = req.session.adminRole === 'super_admin';
+        
+        res.json({ success: true, settings, canEdit });
     });
 });
 

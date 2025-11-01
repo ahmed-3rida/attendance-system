@@ -5013,6 +5013,9 @@ async function fetchSettings() {
         const settingsList = document.getElementById('settingsList');
         if (!settingsList) return;
         
+        const canEdit = data.canEdit !== false; // Default to true if not specified
+        const isSuperAdmin = currentAdmin?.role === 'super_admin' || canEdit;
+        
         const settingsHTML = data.settings.map(setting => {
             const isEnabled = setting.setting_value === '1';
             const settingLabels = {
@@ -5030,14 +5033,26 @@ async function fetchSettings() {
                                     ${setting.description || ''}
                                 </p>
                             </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" 
-                                       id="setting_${setting.setting_key}" 
-                                       ${isEnabled ? 'checked' : ''}
-                                       onchange="toggleSetting('${setting.setting_key}', this.checked)">
-                                <label class="form-check-label" for="setting_${setting.setting_key}">
-                                    ${isEnabled ? 'مفعل' : 'معطل'}
-                                </label>
+                            <div class="d-flex align-items-center">
+                                ${isSuperAdmin ? `
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="setting_${setting.setting_key}" 
+                                               ${isEnabled ? 'checked' : ''}
+                                               onchange="toggleSetting('${setting.setting_key}', this.checked)">
+                                        <label class="form-check-label" for="setting_${setting.setting_key}">
+                                            ${isEnabled ? 'مفعل' : 'معطل'}
+                                        </label>
+                                    </div>
+                                ` : `
+                                    <span class="badge ${isEnabled ? 'bg-success' : 'bg-secondary'} me-2">
+                                        ${isEnabled ? 'مفعل' : 'معطل'}
+                                    </span>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        فقط المدير العام يمكنه التعديل
+                                    </small>
+                                `}
                             </div>
                         </div>
                     </div>
@@ -5045,7 +5060,17 @@ async function fetchSettings() {
             `;
         }).join('');
         
-        settingsList.innerHTML = settingsHTML || '<p class="text-muted">لا توجد إعدادات</p>';
+        if (!isSuperAdmin && data.settings && data.settings.length > 0) {
+            settingsList.innerHTML = `
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    يمكنك فقط عرض الإعدادات. فقط المدير العام (Super Admin) يمكنه تعديل الإعدادات.
+                </div>
+                ${settingsHTML}
+            `;
+        } else {
+            settingsList.innerHTML = settingsHTML || '<p class="text-muted">لا توجد إعدادات</p>';
+        }
     } catch (error) {
         console.error('Error fetching settings:', error);
         const settingsList = document.getElementById('settingsList');
@@ -5062,13 +5087,14 @@ async function fetchSettings() {
 
 async function toggleSetting(settingKey, enabled) {
     try {
-        const response = await fetch(`/api/admin/settings/${settingKey}`, {
+        const response = await fetch('/api/admin/settings', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                setting_value: enabled ? '1' : '0'
+                setting_key: settingKey,
+                setting_value: enabled
             })
         });
         
