@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تسجيل الحضور - الطلاب</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="student-modern.css?v=1.0" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme */
+            --primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --border-color: #e9ecef;
+            --shadow: 0 15px 35px rgba(0,0,0,0.1);
+            --success-bg: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            --error-bg: linear-gradient(45deg, #ff416c, #ff4b2b);
+            --warning-bg: linear-gradient(45deg, #f093fb, #f5576c);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme */
+            --primary-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --card-bg: #2c3e50;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --border-color: #34495e;
+            --shadow: 0 15px 35px rgba(0,0,0,0.3);
+            --success-bg: linear-gradient(45deg, #27ae60, #2ecc71);
+            --error-bg: linear-gradient(45deg, #e74c3c, #c0392b);
+            --warning-bg: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+
+        * {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background: var(--primary-bg);
+            min-height: 100vh;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--primary-bg);
+            z-index: -1;
+            animation: backgroundShift 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes backgroundShift {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.05) rotate(1deg); }
+        }
+
+        /* Floating Particles */
+        .particle {
+            position: fixed;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: none;
+            border-radius: 50px;
+            padding: 12px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(180deg);
+        }
+
+        .theme-toggle i {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+        }
+
+        /* Main Container */
+        .main-container {
+            background: var(--card-bg);
+            border-radius: 25px;
+            box-shadow: var(--shadow);
+            margin: 20px auto;
+            padding: 0;
+            overflow: hidden;
+            animation: slideUp 0.8s ease-out;
+            border: 1px solid var(--border-color);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Welcome Section */
+        .welcome-section {
+            text-align: center;
+            padding: 60px 20px;
+            background: var(--primary-bg);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .welcome-section h1 {
+            font-weight: 700;
+            margin-bottom: 15px;
+            animation: fadeInDown 1s ease-out 0.3s both;
+        }
+
+        .welcome-section p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        /* Content Areas */
+        .content-section {
+            padding: 40px;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scanner Section */
+        .scanner-section {
+            text-align: center;
+        }
+
+        .scanner-icon {
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .camera-container {
+            max-width: 400px;
+            margin: 30px auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Manual Input */
+        .input-group-modern {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        .input-group-modern input {
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .input-group-modern input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .input-group-modern button {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            margin-left: 10px;
+            background: var(--success-bg);
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .input-group-modern button:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Buttons */
+        .btn-modern {
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-weight: 600;
+            text-transform: none;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary-modern {
+            background: var(--primary-bg);
+            color: white;
+        }
+
+        .btn-success-modern {
+            background: var(--success-bg);
+            color: white;
+        }
+
+        .btn-warning-modern {
+            background: var(--warning-bg);
+            color: white;
+        }
+
+        /* Lecture Info */
+        .lecture-info {
+            background: var(--primary-bg);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lecture-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(50%, -50%);
+        }
+
+        .lecture-info-item {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .lecture-info-item:hover {
+            padding-right: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+
+        .lecture-info-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Form Styling */
+        .form-control-modern {
+            border: 2px solid var(--border-color);
+            border-radius: 15px;
+            padding: 15px 20px;
+            background: var(--card-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control-modern:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            transform: translateY(-2px);
+        }
+
+        /* Messages */
+        .message-container {
+            margin: 20px 0;
+            animation: slideInFromTop 0.5s ease-out;
+        }
+
+        @keyframes slideInFromTop {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-message {
+            background: var(--success-bg);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .error-message {
+            background: var(--error-bg);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Loading */
+        .loading-container {
+            text-align: center;
+            padding: 50px;
+        }
+
+        .spinner-modern {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                margin: 10px;
+                border-radius: 20px;
+            }
+            
+            .content-section {
+                padding: 20px;
+            }
+            
+            .welcome-section {
+                padding: 40px 20px;
+            }
+            
+            .welcome-icon {
+                font-size: 3rem;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.8s ease-out;
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.8s ease-out;
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Enhanced Pulse Animation for Icons */
+        .pulse-icon {
+            animation: pulseIcon 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseIcon {
+            0%, 100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 0 rgba(102, 126, 234, 0));
+            }
+            50% { 
+                transform: scale(1.1);
+                filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
+            }
+        }
+
+        /* Shimmer Effect */
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shimmer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255,255,255,0.3) 50%, 
+                transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Glow Effect for Inputs on Focus */
+        .form-control-modern:focus {
+            animation: glowPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 0 0.4rem rgba(102, 126, 234, 0.4);
+            }
+        }
+
+        /* Success Checkmark Animation */
+        .success-checkmark {
+            animation: scaleIn 0.5s ease-out, rotate 0.5s ease-out 0.3s;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Card Hover Effect */
+        .section-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        /* Button Click Effect */
+        .btn-modern:active {
+            transform: scale(0.95);
+        }
+
+        /* Typing Animation for Text */
+        .typing-text {
+            overflow: hidden;
+            border-left: 0.15em solid #667eea;
+            white-space: nowrap;
+            animation: typing 3.5s steps(40, end), blinkCaret 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+
+        @keyframes blinkCaret {
+            from, to { border-color: transparent; }
+            50% { border-color: #667eea; }
+        }
+
+        /* Scanner Border Animation */
+        .scanning-border {
+            position: relative;
+        }
+
+        .scanning-border::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            background: linear-gradient(45deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 200%;
+            border-radius: 24px;
+            z-index: -1;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Floating Labels */
+        .floating-label {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .floating-label input:focus + label,
+        .floating-label input:not(:placeholder-shown) + label {
+            transform: translateY(-25px) scale(0.85);
+            color: #667eea;
+        }
+
+        .floating-label label {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            color: var(--text-secondary);
+        }
+
+        /* Progress Bar Animation */
+        .progress-bar-animated {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            background-size: 200% 100%;
+            animation: progressShift 1.5s ease-in-out infinite;
+        }
+
+        @keyframes progressShift {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 200% 0%; }
+        }
+
+        /* Notification Enhanced */
+        .notification {
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Instructions Card Enhancement */
+        .instruction-item {
+            transition: all 0.3s ease;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .instruction-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateX(-5px);
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+
+    <!-- Main Container -->
+    <div class="student-container">
+        <div class="student-card-wrapper">
+            <div class="student-card">
+                <!-- Header -->
+                <div class="student-header">
+                    <div class="student-logo">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <h1 class="student-title">نظام تسجيل الحضور</h1>
+                    <p class="student-subtitle">قم بمسح QR Code للمحاضرة لتسجيل حضورك بسهولة</p>
+                </div>
+
+                <!-- Body -->
+                <div class="student-body">
+                    <!-- Scanner Section -->
+                    <div id="scannerSection" class="scanner-section">
+                        <div class="scanner-header">
+                            <div class="scanner-icon-container">
+                                <i class="fas fa-camera"></i>
+                            </div>
+                            <h2 class="scanner-title">مسح QR Code</h2>
+                            <p class="scanner-description">وجه الكاميرا نحو QR Code الموجود في المحاضرة</p>
+                        </div>
+                        
+                        <div class="camera-container">
+                            <div id="qr-reader"></div>
+                        </div>
+                        
+                        <div class="scanner-controls">
+                            <button id="startScanner" class="btn-scanner btn-primary-student">
+                                <i class="fas fa-play"></i>
+                                <span>بدء المسح</span>
+                            </button>
+                            <button id="stopScanner" class="btn-scanner btn-secondary-student hidden">
+                                <i class="fas fa-stop"></i>
+                                <span>إيقاف المسح</span>
+                            </button>
+                        </div>
+                        
+                        <div style="margin-top: 32px; text-align: center;">
+                            <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                                <hr style="flex: 1; border-color: rgba(102, 126, 234, 0.2);">
+                                <span style="margin: 0 16px; color: var(--text-secondary); font-size: 14px;">أو</span>
+                                <hr style="flex: 1; border-color: rgba(102, 126, 234, 0.2);">
+                            </div>
+                            
+                            <div class="form-group-student">
+                                <label class="form-label-student">
+                                    <i class="fas fa-keyboard"></i>
+                                    أدخل الكود يدوياً
+                                </label>
+                                <div style="display: flex; gap: 12px;">
+                                    <input type="text" class="form-input-student" id="manualQRCode" 
+                                           placeholder="أدخل QR Code" style="flex: 1;">
+                                    <button class="btn-scanner btn-primary-student" id="manualQRButton" 
+                                            style="padding: 14px 20px;">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Section -->
+                    <div id="loadingSection" class="hidden" style="text-align: center; padding: 40px 0;">
+                        <div style="width: 60px; height: 60px; border: 4px solid rgba(102, 126, 234, 0.1); border-top-color: #667eea; border-radius: 50%; margin: 0 auto 24px; animation: spin 1s linear infinite;"></div>
+                        <h5 style="color: #667eea; font-weight: 600; margin-bottom: 8px;">جاري التحميل...</h5>
+                        <p style="color: var(--text-secondary); font-size: 14px;">جاري تحميل معلومات المحاضرة</p>
+                    </div>
+
+                    <!-- Lecture Info Section -->
+                    <div id="lectureSection" class="hidden form-section">
+                        <div style="background: rgba(102, 126, 234, 0.05); padding: 20px; border-radius: 12px; margin-bottom: 32px; border: 1px solid rgba(102, 126, 234, 0.1);">
+                            <h4 style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text-primary);">
+                                <i class="fas fa-chalkboard-teacher" style="color: #667eea;"></i>
+                                معلومات المحاضرة
+                            </h4>
+                            <div id="lectureDetails"></div>
+                        </div>
+                        
+                        <div>
+                            <h5 style="display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; margin-bottom: 24px; color: var(--text-primary);">
+                                <i class="fas fa-user-plus" style="color: #667eea;"></i>
+                                تسجيل الحضور
+                            </h5>
+                            <form id="attendanceForm">
+                                <div class="form-group-student">
+                                    <label class="form-label-student">
+                                        <i class="fas fa-id-card"></i>
+                                        الرقم الجامعي
+                                    </label>
+                                    <input type="text" class="form-input-student" id="studentId" 
+                                           required placeholder="أدخل رقمك الجامعي">
+                                </div>
+                                
+                                <div class="form-group-student">
+                                    <label class="form-label-student">
+                                        <i class="fas fa-user"></i>
+                                        الاسم رباعي
+                                    </label>
+                                    <input type="text" class="form-input-student" id="studentName" 
+                                           required placeholder="أدخل اسمك كاملاً">
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div class="form-group-student">
+                                        <label class="form-label-student">
+                                            <i class="fas fa-users"></i>
+                                            رقم الجروب <span style="color: var(--error-color);">*</span>
+                                        </label>
+                                        <input type="text" class="form-input-student" id="groupNumber" 
+                                               required placeholder="مثال: G1, G2">
+                                    </div>
+                                    
+                                    <div class="form-group-student">
+                                        <label class="form-label-student">
+                                            <i class="fas fa-layer-group"></i>
+                                            رقم السكشن
+                                        </label>
+                                        <input type="text" class="form-input-student" id="sectionNumber" 
+                                               placeholder="مثال: S1, S2">
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn-submit-student">
+                                    <i class="fas fa-check-circle" style="margin-left: 8px;"></i>
+                                    تسجيل الحضور
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Message Section -->
+                    <div id="messageSection" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- Instructions Card -->
+            <div class="instructions-card" style="margin-top: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 20px; padding: 32px; box-shadow: var(--shadow-md); border: 1px solid rgba(255, 255, 255, 0.3);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                    <div style="width: 48px; height: 48px; background: rgba(102, 126, 234, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-info-circle" style="font-size: 24px; color: #667eea;"></i>
+                    </div>
+                    <h5 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--text-primary);">تعليمات الاستخدام</h5>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+                            <i class="fas fa-check-circle" style="color: var(--success-color); font-size: 18px; margin-top: 2px;"></i>
+                            <span style="color: var(--text-primary); font-size: 14px;">تأكد من أن كاميرا الجهاز تعمل</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+                            <i class="fas fa-check-circle" style="color: var(--success-color); font-size: 18px; margin-top: 2px;"></i>
+                            <span style="color: var(--text-primary); font-size: 14px;">وجه الكاميرا نحو QR Code</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px;">
+                            <i class="fas fa-check-circle" style="color: var(--success-color); font-size: 18px; margin-top: 2px;"></i>
+                            <span style="color: var(--text-primary); font-size: 14px;">أدخل بياناتك الصحيحة</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+                            <i class="fas fa-times-circle" style="color: var(--error-color); font-size: 18px; margin-top: 2px;"></i>
+                            <span style="color: var(--text-primary); font-size: 14px;">لا يمكن التسجيل أكثر من مرة</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+                            <i class="fas fa-times-circle" style="color: var(--error-color); font-size: 18px; margin-top: 2px;"></i>
+                            <span style="color: var(--text-primary); font-size: 14px;">لا تستخدم نفس الجهاز مرتين</span>
+                        </div>
+                        <div style="display: flex; align-items: flex-start; gap: 12px;">
+                            <i class="fas fa-exclamation-circle" style="color: var(--warning-color); font-size: 18px; margin-top: 2px;"></i>
+                            <span style="color: var(--text-primary); font-size: 14px;">تأكد من QR Code صحيح</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="user.js"></script>
+</body>
+</html>

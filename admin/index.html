@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم إدارة الحضور</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="admin-enhanced.css?v=8.1" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme Colors */
+            --primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --sidebar-bg: #2c3e50;
+            --card-bg: #ffffff;
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
+            --text-light: #ffffff;
+            --border-color: #e9ecef;
+            --shadow: 0 15px 35px rgba(0,0,0,0.1);
+            --shadow-hover: 0 20px 40px rgba(0,0,0,0.15);
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --info-color: #3498db;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Colors */
+            --primary-bg: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --sidebar-bg: #1a1a2e;
+            --card-bg: #2c3e50;
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --text-light: #ecf0f1;
+            --border-color: #34495e;
+            --shadow: 0 15px 35px rgba(0,0,0,0.3);
+            --shadow-hover: 0 20px 40px rgba(0,0,0,0.4);
+            --success-color: #2ecc71;
+            --warning-color: #e67e22;
+            --danger-color: #c0392b;
+            --info-color: #5dade2;
+        }
+
+        * {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background: var(--primary-bg);
+            min-height: 100vh;
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        [data-theme="dark"] .loading-screen {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        .spinner-modern {
+            width: 70px;
+            height: 70px;
+            border: 5px solid rgba(255,255,255,0.2);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-screen p {
+            margin-top: 20px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--card-bg);
+            border: none;
+            border-radius: 50px;
+            padding: 12px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1) rotate(180deg);
+        }
+
+        /* Login Page Styles */
+        #loginContainer {
+            direction: rtl;
+        }
+
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+            animation: moveGrid 30s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes moveGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(40px, 40px); }
+        }
+
+        .login-container-modern {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        [data-theme="dark"] .login-card {
+            background: rgba(26, 29, 46, 0.95);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .login-card-header {
+            padding: 48px 40px 32px;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .login-logo-container {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 24px;
+            position: relative;
+        }
+
+        .login-logo-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            animation: floatLogo 3s ease-in-out infinite;
+        }
+
+        @keyframes floatLogo {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .login-logo-icon {
+            font-size: 48px;
+            color: white;
+        }
+
+        .login-logo-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120%;
+            height: 120%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 8px 0;
+        }
+
+        .login-subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .login-card-body {
+            padding: 40px;
+        }
+
+        .login-form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .login-form-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .login-form-label i {
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .login-input-wrapper {
+            position: relative;
+        }
+
+        .login-input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 18px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .form-control-modern {
+            width: 100%;
+            padding: 14px 48px 14px 16px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            font-size: 15px;
+            color: var(--text-primary);
+            background: var(--card-bg);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .form-control-modern:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .form-control-modern:focus + .login-input-icon {
+            color: #667eea;
+            transform: translateY(-50%) scale(1.15);
+            filter: drop-shadow(0 0 8px rgba(102, 126, 234, 0.4));
+        }
+
+        [data-theme="dark"] .form-control-modern {
+            background: #16213e;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="dark"] .form-control-modern:focus {
+            border-color: #667eea;
+            background: #1a1d2e;
+        }
+
+        .password-toggle {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 2;
+            padding: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #667eea;
+        }
+
+        .btn-login-modern {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .btn-login-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .btn-login-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-login-modern:active {
+            transform: translateY(0);
+        }
+
+        .btn-login-modern i {
+            margin-left: 8px;
+            font-size: 18px;
+        }
+
+        .login-error {
+            margin-top: 20px;
+            padding: 14px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            color: #ef4444;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .login-error i {
+            font-size: 18px;
+        }
+
+        .login-footer {
+            padding: 24px 40px;
+            text-align: center;
+            background: rgba(102, 126, 234, 0.05);
+            border-top: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .login-footer-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .login-decorations {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .login-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .login-circle-1 {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            right: -150px;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .login-circle-2 {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            left: -100px;
+            animation: float 6s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 20px); }
+        }
+
+        .btn-modern {
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-weight: 600;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 576px) {
+            .login-card-header {
+                padding: 32px 24px 24px;
+            }
+
+            .login-card-body {
+                padding: 24px;
+            }
+
+            .login-footer {
+                padding: 20px 24px;
+            }
+
+            .login-logo-container {
+                width: 80px;
+                height: 80px;
+            }
+
+            .login-logo-icon {
+                font-size: 36px;
+            }
+
+            .login-title {
+                font-size: 24px;
+            }
+        }
+
+        .btn-modern::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn-modern:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary-modern {
+            background: var(--primary-bg);
+            color: white;
+        }
+
+        /* Main Dashboard Layout */
+        .dashboard-container {
+            display: none;
+        }
+
+        .sidebar {
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            width: 280px;
+            background: var(--sidebar-bg);
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(100%);
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .sidebar-brand {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 0;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 15px 25px;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: white;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(-5px);
+        }
+
+        .nav-link i {
+            margin-left: 10px;
+            width: 20px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-right: 280px;
+            padding: 30px;
+            min-height: 100vh;
+            transition: margin-right 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-right: 0;
+        }
+
+        /* Header */
+        .header {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Cards */
+        .stats-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--primary-bg);
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .stats-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .stats-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        /* Tables */
+        .table-modern {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .table-modern table {
+            margin-bottom: 0;
+        }
+
+        .table-modern thead {
+            background: var(--primary-bg);
+            color: white;
+        }
+
+        .table-modern th {
+            border: none;
+            padding: 20px 15px;
+            font-weight: 600;
+        }
+
+        .table-modern td {
+            border: none;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Forms */
+        .form-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        /* QR Code Display */
+        .qr-display {
+            text-align: center;
+            padding: 40px;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            margin: 20px 0;
+        }
+
+        .qr-code-container {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: var(--shadow);
+            background: var(--card-bg);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+            background: var(--primary-bg);
+            color: white;
+            border-radius: 20px 20px 0 0;
+        }
+
+        /* Buttons */
+        .btn-success-modern {
+            background: linear-gradient(45deg, var(--success-color), #2ecc71);
+            color: white;
+        }
+
+        .btn-warning-modern {
+            background: linear-gradient(45deg, var(--warning-color), #e67e22);
+            color: white;
+        }
+
+        .btn-danger-modern {
+            background: linear-gradient(45deg, var(--danger-color), #c0392b);
+            color: white;
+        }
+
+        .btn-info-modern {
+            background: linear-gradient(45deg, var(--info-color), #5dade2);
+            color: white;
+        }
+
+        /* Badges */
+        .badge-modern {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.8s ease-out;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-right: 0;
+            }
+
+            .header-toggle {
+                display: block;
+            }
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Role-specific styles */
+        .super-admin-only {
+            display: none;
+        }
+
+        .role-super_admin .super-admin-only {
+            display: block;
+        }
+
+        .doctor-only {
+            display: none;
+        }
+
+        .role-doctor .doctor-only {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="text-center text-white">
+            <div class="spinner-modern"></div>
+            <p class="mt-3">جاري التحميل...</p>
+        </div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع">
+        <i class="fas fa-moon" id="theme-icon"></i>
+    </button>
+
+    <!-- Login Container -->
+    <div id="loginContainer" class="login-wrapper">
+        <div class="login-decorations">
+            <div class="login-circle login-circle-1"></div>
+            <div class="login-circle login-circle-2"></div>
+        </div>
+        
+        <div class="login-container-modern">
+            <div class="login-card">
+                <!-- Card Header -->
+                <div class="login-card-header">
+                    <div class="login-logo-container">
+                        <div class="login-logo-glow"></div>
+                        <div class="login-logo-bg">
+                            <i class="fas fa-graduation-cap login-logo-icon"></i>
+                        </div>
+                    </div>
+                    <h1 class="login-title">نظام إدارة الحضور</h1>
+                    <p class="login-subtitle">مرحباً بك! قم بتسجيل الدخول للمتابعة</p>
+                </div>
+
+                <!-- Card Body -->
+                <div class="login-card-body">
+                    <form id="loginForm" onsubmit="return false;" action="#">
+                        <!-- Username Field -->
+                        <div class="login-form-group">
+                            <label class="login-form-label">
+                                <i class="fas fa-user"></i>
+                                اسم المستخدم
+                            </label>
+                            <div class="login-input-wrapper">
+                                <input type="text" 
+                                       class="form-control-modern" 
+                                       id="username" 
+                                       required 
+                                       placeholder="أدخل اسم المستخدم"
+                                       autocomplete="username">
+                                <i class="fas fa-user-circle login-input-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Password Field -->
+                        <div class="login-form-group">
+                            <label class="login-form-label">
+                                <i class="fas fa-lock"></i>
+                                كلمة المرور
+                            </label>
+                            <div class="login-input-wrapper">
+                                <input type="password" 
+                                       class="form-control-modern" 
+                                       id="password" 
+                                       required 
+                                       placeholder="أدخل كلمة المرور"
+                                       autocomplete="current-password">
+                                <button type="button" 
+                                        class="password-toggle" 
+                                        onclick="togglePasswordVisibility()"
+                                        title="إظهار/إخفاء كلمة المرور">
+                                    <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn-login-modern">
+                            <span>تسجيل الدخول</span>
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+
+                        <!-- Error Message -->
+                        <div id="loginError" class="login-error hidden">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span id="loginErrorMessage"></span>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Card Footer -->
+                <div class="login-footer">
+                    <p class="login-footer-text">
+                        <i class="fas fa-shield-alt"></i>
+                        نظام آمن ومحمي
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Container -->
+    <div id="dashboardContainer" class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="sidebar-brand">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    نظام الحضور
+                </a>
+            </div>
+            
+            <ul class="nav sidebar-nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-tab="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        الرئيسية
+                    </a>
+                </li>
+                
+                <!-- Super Admin Only -->
+                <li class="nav-item super-admin-only">
+                    <a class="nav-link" href="#" data-tab="doctors">
+                        <i class="fas fa-user-md"></i>
+                        إدارة الدكاترة
+                    </a>
+                </li>
+                
+                <li class="nav-item super-admin-only">
+                    <a class="nav-link" href="#" data-tab="levels">
+                        <i class="fas fa-layer-group"></i>
+                        إدارة المراحل
+                    </a>
+                </li>
+                
+                <li class="nav-item super-admin-only">
+                    <a class="nav-link" href="#" data-tab="subjects">
+                        <i class="fas fa-book"></i>
+                        إدارة المواد
+                    </a>
+                </li>
+                
+                <!-- Doctor Only -->
+                <li class="nav-item doctor-only">
+                    <a class="nav-link" href="#" data-tab="lectures">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        إدارة المحاضرات
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="attendance">
+                        <i class="fas fa-chart-bar"></i>
+                        الإحصائيات
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="students">
+                        <i class="fas fa-users"></i>
+                        إدارة الطلاب
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="settings">
+                        <i class="fas fa-cog"></i>
+                        الإعدادات
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-tab="profile">
+                        <i class="fas fa-user"></i>
+                        البروفايل
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        تسجيل الخروج
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent">
+            <!-- Header -->
+            <div class="header">
+                <div>
+                    <button class="header-toggle" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h4 class="mb-0" id="pageTitle">الرئيسية</h4>
+                </div>
+                
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold" id="userName">المدير</div>
+                        <small class="text-muted" id="userRole">Super Admin</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="tab-content">
+                <div class="row mb-4">
+                    <div class="col-lg-3 col-md-6 mb-4 super-admin-only">
+                        <div class="stats-card">
+                            <div class="stats-icon text-info">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                            <div class="stats-number" id="totalDoctors">0</div>
+                            <div class="stats-label">إجمالي الدكاترة</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="stats-card">
+                            <div class="stats-icon text-success">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <div class="stats-number" id="totalSubjects">0</div>
+                            <div class="stats-label">إجمالي المواد</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="stats-card">
+                            <div class="stats-icon text-warning">
+                                <i class="fas fa-chalkboard-teacher"></i>
+                            </div>
+                            <div class="stats-number" id="totalLectures">0</div>
+                            <div class="stats-label">إجمالي المحاضرات</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="stats-card">
+                            <div class="stats-icon text-danger">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stats-number" id="totalAttendance">0</div>
+                            <div class="stats-label">إجمالي الحضور</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="stats-card">
+                            <h5 class="mb-4">
+                                <i class="fas fa-clock me-2"></i>
+                                الأنشطة الأخيرة
+                            </h5>
+                            <div id="recentActivity">
+                                <!-- Recent activity will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other tabs will be added here -->
+            <div id="doctorsTab" class="tab-content hidden">
+                <!-- Doctors management content -->
+            </div>
+
+            <div id="levelsTab" class="tab-content hidden">
+                <!-- Levels management content -->
+            </div>
+
+            <div id="subjectsTab" class="tab-content hidden">
+                <!-- Subjects management content -->
+            </div>
+
+            <div id="lecturesTab" class="tab-content hidden">
+                <!-- Lectures management content -->
+            </div>
+
+            <div id="attendanceTab" class="tab-content hidden">
+                <!-- Attendance statistics content -->
+            </div>
+            
+            <div id="studentsTab" class="tab-content hidden">
+                <!-- Students management content -->
+            </div>
+            
+            <div id="settingsTab" class="tab-content hidden">
+                <!-- Settings content -->
+            </div>
+            
+            <div id="profileTab" class="tab-content hidden">
+                <!-- Profile content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Doctor Modal -->
+    <div class="modal fade" id="createDoctorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus me-2"></i>إضافة دكتور جديد
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createDoctorForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">اسم المستخدم *</label>
+                                <input type="text" class="form-control form-control-modern" id="doctorUsername" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">كلمة المرور *</label>
+                                <input type="password" class="form-control form-control-modern" id="doctorPassword" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">الاسم رباعي *</label>
+                                <input type="text" class="form-control form-control-modern" id="doctorFullName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">البريد الإلكتروني</label>
+                                <input type="email" class="form-control form-control-modern" id="doctorEmail">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">المواد المخصصة *</label>
+                            <div id="doctorSubjectsContainer" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Subject checkboxes will be loaded here -->
+                            </div>
+                            <small class="text-muted">يرجى اختيار مادة واحدة على الأقل</small>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>ملاحظة:</strong> سيتم إنشاء حساب للدكتور بالبيانات المدخلة أعلاه
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary-modern btn-modern" onclick="createDoctor()">
+                        <i class="fas fa-save me-2"></i>إنشاء حساب الدكتور
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Subject Modal -->
+    <div class="modal fade" id="createSubjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-book-plus me-2"></i>إضافة مادة جديدة
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createSubjectForm">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">اسم المادة *</label>
+                            <input type="text" class="form-control form-control-modern" id="subjectName" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">كود المادة</label>
+                            <input type="text" class="form-control form-control-modern" id="subjectCode" placeholder="مثال: CS101">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">وصف المادة</label>
+                            <textarea class="form-control form-control-modern" id="subjectDescription" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">المرحلة الدراسية *</label>
+                            <select class="form-control form-control-modern" id="subjectLevelId" required>
+                                <option value="">اختر المرحلة الدراسية</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الدكتور المسؤول</label>
+                            <select class="form-control form-control-modern" id="subjectAdminId">
+                                <option value="">اختر الدكتور المسؤول (اختياري)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary-modern btn-modern" onclick="createSubject()">
+                        <i class="fas fa-save me-2"></i>إنشاء المادة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Doctor Modal -->
+    <div class="modal fade" id="editDoctorModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit me-2"></i>تعديل الدكتور
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editDoctorForm">
+                        <input type="hidden" id="editDoctorId">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">اسم المستخدم</label>
+                                <input type="text" class="form-control form-control-modern" id="editDoctorUsername" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">كلمة المرور الجديدة</label>
+                                <input type="password" class="form-control form-control-modern" id="editDoctorPassword" placeholder="اتركه فارغ للحفاظ على الكلمة الحالية">
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">الاسم رباعي *</label>
+                                <input type="text" class="form-control form-control-modern" id="editDoctorFullName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">البريد الإلكتروني</label>
+                                <input type="email" class="form-control form-control-modern" id="editDoctorEmail">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">المواد المخصصة *</label>
+                            <div id="editDoctorSubjectsContainer" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                                <!-- Subject checkboxes will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">حالة الحساب</label>
+                            <select class="form-control form-control-modern" id="editDoctorActive">
+                                <option value="1">نشط</option>
+                                <option value="0">معطل</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary-modern btn-modern" onclick="updateDoctor()">
+                        <i class="fas fa-save me-2"></i>حفظ التعديلات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Subject Modal -->
+    <div class="modal fade" id="editSubjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-book-edit me-2"></i>تعديل المادة
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editSubjectForm">
+                        <input type="hidden" id="editSubjectId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">اسم المادة *</label>
+                            <input type="text" class="form-control form-control-modern" id="editSubjectName" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">كود المادة</label>
+                            <input type="text" class="form-control form-control-modern" id="editSubjectCode" placeholder="مثال: CS101">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">وصف المادة</label>
+                            <textarea class="form-control form-control-modern" id="editSubjectDescription" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">المرحلة الدراسية *</label>
+                            <select class="form-control form-control-modern" id="editSubjectLevelId" required>
+                                <option value="">اختر المرحلة الدراسية</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">الدكتور المسؤول</label>
+                            <select class="form-control form-control-modern" id="editSubjectAdminId">
+                                <option value="">اختر الدكتور المسؤول (اختياري)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">حالة المادة</label>
+                            <select class="form-control form-control-modern" id="editSubjectActive">
+                                <option value="1">نشط</option>
+                                <option value="0">معطل</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary-modern btn-modern" onclick="updateSubject()">
+                        <i class="fas fa-save me-2"></i>حفظ التعديلات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Super Admin Modal -->
+    <div class="modal fade" id="createSuperAdminModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-shield me-2"></i>إضافة مدير عام جديد
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createSuperAdminForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">اسم المستخدم *</label>
+                                <input type="text" class="form-control form-control-modern" id="superAdminUsername" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">كلمة المرور *</label>
+                                <input type="password" class="form-control form-control-modern" id="superAdminPassword" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">الاسم رباعي *</label>
+                                <input type="text" class="form-control form-control-modern" id="superAdminFullName" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">البريد الإلكتروني</label>
+                                <input type="email" class="form-control form-control-modern" id="superAdminEmail">
+                            </div>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>تنبيه:</strong> المدير العام لديه صلاحيات كاملة في النظام
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-danger-modern btn-modern" onclick="createSuperAdmin()">
+                        <i class="fas fa-shield-alt me-2"></i>إنشاء مدير عام
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="admin-animations.js"></script>
+    <script src="admin.js?v=6.1"></script>
+</body>
+</html>
